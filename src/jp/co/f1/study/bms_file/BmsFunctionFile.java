@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import jp.co.f1.study.common.FileIn;
 import jp.co.f1.study.common.FileOut;
 import jp.co.f1.study.common.KeyIn;
+import jp.co.f1.study.common.MyFormat;
 
 public class BmsFunctionFile {
+	MyFormat fm = new MyFormat();
 	private KeyIn objKeyIn = new KeyIn();
 	private final String TAB = "\t";
 
@@ -151,14 +153,13 @@ public class BmsFunctionFile {
 				System.out.println("価格に文字が含まれています。データを修正した後で再度実行してください。");
 				System.exit(7);
 			}
-
-			// loadIntoMemoryFromFileメソッド内で読み込んだデータが1件も存在しない時
-			//「loadIntoMemoryFromFileInitiallyメソッド」を呼び出すように修正し、初期データ登録機能を実装します。
-			if (isbnArrayList.size() == 0) {
-				System.out.println("読み込んだ書籍データが0件です。");
-				System.out.println("初期データファイルからデータの読み込みを行いました。");
-				loadIntoMemoryFromFileInitially();
-			}
+		}
+		// loadIntoMemoryFromFileメソッド内で読み込んだデータが1件も存在しない時
+		// 「loadIntoMemoryFromFileInitiallyメソッド」を呼び出すように修正し、初期データ登録機能を実装します。
+		if (isbnArrayList.size() == 0) {
+			System.out.println("読み込んだ書籍データが0件です。");
+			System.out.println("初期データファイルからデータの読み込みを行いました。");
+			loadIntoMemoryFromFileInitially();
 		}
 		// FileInクラスを利用して書籍データファイルをクローズする
 		if (objFileIn.close() == false) {
@@ -173,8 +174,9 @@ public class BmsFunctionFile {
 		System.out.println("No." + TAB + "ISBN" + TAB + "Title" + TAB + "Price");
 		System.out.println("----------------------------------");
 		for (int i = 0; i < isbnArrayList.size(); i++) {
-			System.out.println((i + 1) + "." + TAB + isbnArrayList.get(i) + TAB + titleArrayList.get(i) + TAB
-					+ priceArrayList.get(i));
+			String formattedMoney = fm.moneyFormat(priceArrayList.get(i));
+			System.out.println(
+					(i + 1) + "." + TAB + isbnArrayList.get(i) + TAB + titleArrayList.get(i) + TAB + formattedMoney);
 		}
 		System.out.println("----------------------------------");
 	}
@@ -290,11 +292,13 @@ public class BmsFunctionFile {
 
 		writeIntoFileFromMemory();
 
+		String formattedMoney = fm.moneyFormat(intInputPrice);
+
 		System.out.println("");
 		System.out.println("***登録済書籍情報***");
 		System.out.println("ISBN" + TAB + "Title" + TAB + "Price");
 		System.out.println("----------------------------------");
-		System.out.println(inputIsbn + TAB + inputTitle + TAB + intInputPrice);
+		System.out.println(inputIsbn + TAB + inputTitle + TAB + formattedMoney);
 		System.out.println("----------------------------------");
 		System.out.println("上記書籍が登録されました。");
 	}
@@ -322,12 +326,11 @@ public class BmsFunctionFile {
 
 			break;
 		}
-
+		String formattedMoney = fm.moneyFormat(priceArrayList.get(index));
 		System.out.println("***削除対象書籍情報***");
 		System.out.println("isbn" + TAB + "title" + TAB + "price");
 		System.out.println("----------------------------------");
-		System.out.println(
-				isbnArrayList.get(index) + TAB + titleArrayList.get(index) + TAB + priceArrayList.get(index));
+		System.out.println(isbnArrayList.get(index) + TAB + titleArrayList.get(index) + TAB + formattedMoney);
 		System.out.println("----------------------------------");
 		System.out.println("上記書籍を削除しますか＜y/n＞");
 		String confirm = objKeyIn.readKey();
@@ -387,8 +390,9 @@ public class BmsFunctionFile {
 			break;
 		}
 
+		String formattedOldPrice = fm.moneyFormat(oldPrice);
 		while (true) {
-			System.out.println("価格【" + oldPrice + "】変更⇒");
+			System.out.println("価格【" + formattedOldPrice + "】変更⇒");
 			newPrice = objKeyIn.readInt();
 
 			// 入力された数字は０以上かどうかチェック
@@ -404,13 +408,14 @@ public class BmsFunctionFile {
 		priceArrayList.set(index, newPrice);
 		writeIntoFileFromMemory();
 
+		String formattedNewPrice = fm.moneyFormat(newPrice);
 		System.out.println("***更新済書籍情報***");
 		System.out.println("下記のように書籍情報が更新されました。");
 		System.out.println("----------------------------------");
 		System.out.println(TAB + "変更前" + TAB + "変更後");
 		System.out.println("ISBN" + TAB + isbnArrayList.get(index) + "→" + isbnArrayList.get(index));
 		System.out.println("Title" + TAB + oldTitle + "→" + newTitle);
-		System.out.println("Price" + TAB + oldPrice + "→" + newPrice);
+		System.out.println("Price" + TAB + formattedOldPrice + "→" + formattedNewPrice);
 		System.out.println("----------------------------------");
 	}
 }
