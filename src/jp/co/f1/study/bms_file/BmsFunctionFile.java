@@ -15,6 +15,7 @@ public class BmsFunctionFile {
 
 	// 書籍データファイルのパス
 	private final static String FILENAME = "file\\bmsFileDB.csv";
+	private final static String REPRESENT_FILENAME = "file\\bmsIniFile.csv";
 
 	// 書籍データを格納するArrayListオブジェクト
 	private ArrayList<String> isbnArrayList = new ArrayList<String>();
@@ -63,20 +64,67 @@ public class BmsFunctionFile {
 		return num;
 	}
 
+	public void loadIntoMemoryFromFileInitially() {
+		String strLine;
+		String[] bookArray = new String[3];
+		// FileInクラスを利用して初期データファイルをオープンする。
+		if (objFileIn.open(REPRESENT_FILENAME) == false) {
+			System.out.println("初期化ファイルのオープンに失敗しました。処理を中断します。");
+			System.exit(1);
+		}
+
+		// FileInクラスを利用して初期データファイルから書籍データを読み込む。
+		while ((strLine = objFileIn.readLine()) != null) {
+
+			// splitメソッドを利用して、読み込んだ書籍データを,(カンマ)で分割した配列データを受け取る。
+			bookArray = strLine.split(STR_COMMA);
+
+			// 読み込んだ1行データのISBNやTITLE、またはPRICEのデータが1つでも不足している場合、
+			// エラーメッセージを表示し、プログラムを停止
+			if (bookArray.length != 3) {
+				System.out.println("不正なデータが存在します。データを修正した後で再度実行してください。");
+				System.exit(2);
+			}
+
+			// 分割した配列データがヘッダーデータだった場合には処理をスキップし、ヘッダーデータではない場合、各ArrayListオブジェクトに格納する。
+			try {
+				if (!bookArray[0].equals("isbn")) {
+					isbnArrayList.add(bookArray[0]);
+					titleArrayList.add(bookArray[1]);
+					priceArrayList.add(Integer.parseInt(bookArray[2]));
+				}
+			} catch (NumberFormatException e) {
+				// priceがintegerではない場合、エラーメッセージ表示
+				System.out.println("価格に文字が含まれています。データを修正した後で再度実行してください。");
+				System.exit(3);
+			}
+
+		}
+		// FileInクラスを利用して書籍データファイルをクローズする。
+		// こちらのコードを加えるとIllegalStateException: Scanner closedが発生します。
+//		if (objFileIn.close() == false) {
+//			System.out.println("初期化ファイルのクローズに失敗しました。処理を中断します。");
+//			System.exit(4);
+//		}
+
+		// writeIntoFileFromMemoryメソッドを呼び出し、読み込んだ初期データ全てを書籍データファイルに書き込む。
+		writeIntoFileFromMemory();
+	}
+
 	// データ読み込み
 	public void loadIntoMemoryFromFile() {
 		String strLine;
 		String[] bookArray = new String[3];
 
 		// 書籍データを格納する各ArrayListオブジェクト内のデータを初期化する
-		getIsbnArrayList().clear();
+		isbnArrayList.clear();
 		titleArrayList.clear();
 		priceArrayList.clear();
 
 		// データファイルをオープンする。失敗する場合、メッセージ表示&プログラム終了
 		if (objFileIn.open(FILENAME) == false) {
 			System.out.println("ファイルオープンに失敗しました。処理を中断します。");
-			System.exit(1);
+			System.exit(5);
 		}
 
 		// 読み込み可能なデータがなくなるまで処理を繰り返す
@@ -88,27 +136,34 @@ public class BmsFunctionFile {
 			// エラーメッセージを表示し、プログラムを停止
 			if (bookArray.length != 3) {
 				System.out.println("不正なデータが存在します。データを修正した後で再度実行してください。");
-				System.exit(2);
+				System.exit(6);
 			}
 
 			// 分割した配列データがヘッダーだった場合には処理をスキップし、ヘッダーではない場合には各ArrayListオブジェクトに格納する
 			try {
 				if (!bookArray[0].equals("isbn")) {
-					getIsbnArrayList().add(bookArray[0]);
+					isbnArrayList.add(bookArray[0]);
 					titleArrayList.add(bookArray[1]);
 					priceArrayList.add(Integer.parseInt(bookArray[2]));
 				}
 			} catch (NumberFormatException e) {
 				// priceがintegerではない場合、エラーメッセージ表示
 				System.out.println("価格に文字が含まれています。データを修正した後で再度実行してください。");
-				System.exit(3);
+				System.exit(7);
 			}
 
+			// loadIntoMemoryFromFileメソッド内で読み込んだデータが1件も存在しない時
+			//「loadIntoMemoryFromFileInitiallyメソッド」を呼び出すように修正し、初期データ登録機能を実装します。
+			if (isbnArrayList.size() == 0) {
+				System.out.println("読み込んだ書籍データが0件です。");
+				System.out.println("初期データファイルからデータの読み込みを行いました。");
+				loadIntoMemoryFromFileInitially();
+			}
 		}
 		// FileInクラスを利用して書籍データファイルをクローズする
 		if (objFileIn.close() == false) {
 			System.out.println("ファイルクローズに失敗しました。処理を中断します。");
-			System.exit(4);
+			System.exit(8);
 		}
 	}
 
@@ -117,8 +172,8 @@ public class BmsFunctionFile {
 		System.out.println("***書籍一覧***");
 		System.out.println("No." + TAB + "ISBN" + TAB + "Title" + TAB + "Price");
 		System.out.println("----------------------------------");
-		for (int i = 0; i < getIsbnArrayList().size(); i++) {
-			System.out.println((i + 1) + "." + TAB + getIsbnArrayList().get(i) + TAB + titleArrayList.get(i) + TAB
+		for (int i = 0; i < isbnArrayList.size(); i++) {
+			System.out.println((i + 1) + "." + TAB + isbnArrayList.get(i) + TAB + titleArrayList.get(i) + TAB
 					+ priceArrayList.get(i));
 		}
 		System.out.println("----------------------------------");
@@ -135,21 +190,21 @@ public class BmsFunctionFile {
 		// FileOutクラスを利用して書籍データファイルをオープンする
 		if (objOut.open(FILENAME) == false) {
 			System.out.println("書き込みファイルのオープンに失敗しました。処理を中断します。");
-			System.exit(5);
+			System.exit(9);
 		}
 
 		// Header書く
 		objOut.writeln("isbn,title,price");
 
 		// Data書く
-		for (int i = 0; i < getIsbnArrayList().size(); i++) {
+		for (int i = 0; i < isbnArrayList.size(); i++) {
 			objOut.writeln(
-					getIsbnArrayList().get(i) + STR_COMMA + titleArrayList.get(i) + STR_COMMA + priceArrayList.get(i));
+					isbnArrayList.get(i) + STR_COMMA + titleArrayList.get(i) + STR_COMMA + priceArrayList.get(i));
 		}
 
 		if (objOut.close() == false) {
 			System.out.println("書き込みファイルのクローズに失敗しました。処理を中断します。");
-			System.exit(6);
+			System.exit(10);
 		}
 	}
 
@@ -177,14 +232,14 @@ public class BmsFunctionFile {
 			}
 
 			// ISBN重複しているかどうかチェック
-			for (int i = 0; i < getIsbnArrayList().size(); i++) {
-				if (inputIsbn.equals(getIsbnArrayList().get(i))) {
+			for (int i = 0; i < isbnArrayList.size(); i++) {
+				if (inputIsbn.equals(isbnArrayList.get(i))) {
 					System.out.println("入力ISBNは既に登録されています。:" + inputIsbn);
 					continue loopIsbn;
 				}
 			}
 
-			getIsbnArrayList().add(inputIsbn);
+			isbnArrayList.add(inputIsbn);
 			break;
 		}
 
@@ -257,7 +312,7 @@ public class BmsFunctionFile {
 			String selectedIsbn = objKeyIn.readKey();
 
 			// 入力したISBNでIndexを探す
-			index = getIsbnArrayList().indexOf(selectedIsbn);
+			index = isbnArrayList.indexOf(selectedIsbn);
 
 			// 入力したISBNが存在しない場合、エラーメッセージ表示
 			if (index == -1) {
@@ -271,16 +326,16 @@ public class BmsFunctionFile {
 		System.out.println("***削除対象書籍情報***");
 		System.out.println("isbn" + TAB + "title" + TAB + "price");
 		System.out.println("----------------------------------");
-		System.out
-				.println(getIsbnArrayList().get(index) + TAB + titleArrayList.get(index) + TAB + priceArrayList.get(index));
+		System.out.println(
+				isbnArrayList.get(index) + TAB + titleArrayList.get(index) + TAB + priceArrayList.get(index));
 		System.out.println("----------------------------------");
 		System.out.println("上記書籍を削除しますか＜y/n＞");
 		String confirm = objKeyIn.readKey();
 
 		if (confirm.toLowerCase().equals("y")) {
-			System.out.println("ISBN:" + getIsbnArrayList().get(index) + "の書籍が削除されました。");
+			System.out.println("ISBN:" + isbnArrayList.get(index) + "の書籍が削除されました。");
 			System.out.println("");
-			getIsbnArrayList().remove(index);
+			isbnArrayList.remove(index);
 			titleArrayList.remove(index);
 			priceArrayList.remove(index);
 			writeIntoFileFromMemory();
@@ -305,7 +360,7 @@ public class BmsFunctionFile {
 
 			String book = objKeyIn.readKey();
 			// Find book
-			index = getIsbnArrayList().indexOf(book);
+			index = isbnArrayList.indexOf(book);
 
 			// 入力したISBNが存在しない場合、エラーメッセージ表示
 			if (index == -1) {
@@ -353,17 +408,9 @@ public class BmsFunctionFile {
 		System.out.println("下記のように書籍情報が更新されました。");
 		System.out.println("----------------------------------");
 		System.out.println(TAB + "変更前" + TAB + "変更後");
-		System.out.println("ISBN" + TAB + getIsbnArrayList().get(index) + "→" + getIsbnArrayList().get(index));
+		System.out.println("ISBN" + TAB + isbnArrayList.get(index) + "→" + isbnArrayList.get(index));
 		System.out.println("Title" + TAB + oldTitle + "→" + newTitle);
 		System.out.println("Price" + TAB + oldPrice + "→" + newPrice);
 		System.out.println("----------------------------------");
-	}
-
-	public ArrayList<String> getIsbnArrayList() {
-		return isbnArrayList;
-	}
-
-	public void setIsbnArrayList(ArrayList<String> isbnArrayList) {
-		this.isbnArrayList = isbnArrayList;
 	}
 }
